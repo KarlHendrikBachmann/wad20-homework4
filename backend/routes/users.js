@@ -156,6 +156,7 @@ router.delete('/:userId/follows', authorize, (request, response) => {
                     code: 'not_following',
                     message: 'You are not following this user'
                 });
+            return;
         } else {
             FollowModel.delete(userId, followerId, () => {
                 response.json({
