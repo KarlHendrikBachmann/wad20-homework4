@@ -2,6 +2,7 @@ import {mount, createLocalVue} from '@vue/test-utils'
 import Vuex from 'vuex'
 import VueRouter from 'vue-router'
 import Posts from "../../src/components/Posts.vue";
+import Axios from 'axios';
 
 const localVue = createLocalVue();
 
@@ -104,3 +105,50 @@ describe('Posts', () => {
         expect(true).toBe(true)
     });
 });
+
+describe('Posts', () => {
+    const wrapper = mount(Posts, {router, store, localVue});
+
+    it('has main-container', () => {
+        expect(wrapper.contains('.main-container')).toBe(true);
+    })
+    it('has posts', () => {
+        expect(wrapper.contains('.post')).toBe(true);
+    })
+    it('has the same amount of posts as testData', () => {
+        expect(wrapper.findAll('.post').length).toBe(wrapper.vm.posts.length);
+    })
+})
+
+describe('Posts', () => {
+    const wrapper = mount(Posts, {router, store, localVue});
+    it('contains media with correct properties', () => {
+        const posts = wrapper.findAll('.post');
+        const axiosposts = wrapper.vm.posts;
+        for(var i = 0; i < posts.length; i++) {
+            let post = posts.at(i);
+            let axiospost = axiosposts[i];
+
+            if(axiospost.media != null && axiospost.media.type == 'image') {
+                expect(post.find('img').exists()).toBe(true);
+            }
+            if(axiospost.media != null && axiospost.media.type == 'video') {
+                expect(post.find('video').exists()).toBe(true);
+            }
+            if(axiospost.media == null) {
+                expect(post.find('img').exists() && post.find('video').exists()).toBe(false);
+            }
+        }
+    })
+
+    it('create time format is correct', () => {
+        const posts = wrapper.findAll('.post');
+        expect(posts.length).toBe(3);
+        const axiosposts = wrapper.vm.posts;
+        for(var i = 0; i < posts.length; i++) {
+            let postTime = posts.at(i).find('.post-author').findAll('small').at(1).text();
+            let axiosPostTime = axiosposts[i].createTime;
+            expect(postTime).toBe(wrapper.vm.$options.filters.formatDate(axiosPostTime));
+        }
+    })
+})
