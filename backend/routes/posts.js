@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const authorize = require('../middlewares/authorize');
 const PostModel = require('../models/PostModel');
+const isImageUrl = require('is-image-url');
+const validUrl = require('valid-url');
 
 
 router.get('/', authorize, (request, response) => {
@@ -22,15 +24,46 @@ router.get('/', authorize, (request, response) => {
 
 });
 
-router.post('/', authorize,  (request, response) => {
-
-    // Endpoint to create a new post
-
+router.post('/', authorize, (request, response) => {
+    let text = request.body.text;
+    let url = request.body.media.url;
+    let type = request.body.media.type;
+    if(text === null && !validUrl.isUri(url)){
+        console.log("Provided url is not valid!");
+        response.status(400).json({});
+    }
+    if(text === null && url === null){
+        console.log("You need either text or media in a post!");
+        response.status(400).json({});
+    }
+    if(type === "image"){
+        if(!isImageUrl(url)){
+            console.log("Url is not an image!");
+            response.status(400).json({});
+        }
+    }
+    else{
+        if(isImageUrl(url)){
+            console.log("Url is not a video!");
+            response.status(400).json({});
+        }
+    }
+    let params = {
+        userId: request.currentUser.id,
+        text: text,
+        media: {
+            url: url,
+            type: type,
+        }
+    }
+    PostModel.create(params, () =>{
+        response.status(201).json();
+    })
 });
 
 
 router.put('/:postId/likes', authorize, (request, response) => {
-    PostModel.like(request.currentUser.id,request.params.postId, () => {
+    PostModel.like(request.currentUser.id, request.params.postId, () => {
         response.status(201)
     });
     response.json([])
@@ -38,8 +71,8 @@ router.put('/:postId/likes', authorize, (request, response) => {
 });
 
 router.delete('/:postId/likes', authorize, (request, response) => {
-    PostModel.unlike(request.currentUser.id, request.params.postId,() => {
-       response.status(201)
+    PostModel.unlike(request.currentUser.id, request.params.postId, () => {
+        response.status(201)
     });
     response.json([])
 
